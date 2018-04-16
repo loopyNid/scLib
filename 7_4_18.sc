@@ -12,8 +12,6 @@
 
 // play{LFPar.ar([45, 45]) * LFTri.ar(90)};
 
-play{SinOsc.ar(449)}
-
 (
 SynthDef(\NID,{arg freq = 300, freqK = 10, vol=0.6;
 	var src;
@@ -26,6 +24,7 @@ SynthDef(\NID,{arg freq = 300, freqK = 10, vol=0.6;
 }).add;
 )
 
+Synth(\NID)
 // (
 // SynthDef(\NID1,{arg vol = 0.7;
 // 	//envelope
@@ -65,8 +64,6 @@ SynthDef(\NID4,{arg freq = 300, vol=0.6;
 	Out.ar([1, -1],src)
 }).add;
 )
-
-Synth(\NID4)
 
 r = Routine({
 	
