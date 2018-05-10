@@ -1,8 +1,9 @@
 (
 // init
 s.boot;
-~sample1 = Buffer.read(s, "/home/budos/Music/samples/metallosamplemono.wav");
-~sample1.play;
+~sample1 = Buffer.read(s, File.getcwd +/+ "samples/metallosamplemono.wav");
+~sample2 = Buffer.read(s, File.getcwd +/+ "samples/scatemono.wav");
+// ~sample1.play;
 x = 0.5;
 /// Synth
 
@@ -26,26 +27,41 @@ SynthDef(\Grain2,{|impFreq = 2, gDur = 0.5, sndbuf, rate = 1, pos = 0.4 , vol = 
 	var src, env, envgen;
 	env = Env.new([0,1,0],[1,1]);
 	envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
-	src = FreeVerb.ar(GrainBuf.ar(2, Impulse.ar(impFreq), gDur, sndbuf, rate, pos), mix: 0.33, room: 0.5, damp: 0.5, );
-	Out.ar(0, (vol)*src*envgen);
+	src = FreeVerb.ar(GrainBuf.ar(2, Impulse.ar(impFreq), gDur, sndbuf, rate, pos), mix: 0.33, room: 1, damp: 0.5, );
+	Out.ar(0, vol*src*envgen);
+}).add;
+
+SynthDef(\klk, {|impFreq = 2, gDur = 0.5, sndbuf, rate = 1, pos = 0.4 , vol = 0.6|
+	var src, env, envgen;
+	env = Env.perc();
+	envgen = EnvGen.kr(env, gate:1, doneAction: 2);
+	src = GrainBuf.ar(2, Impulse.ar(impFreq), gDur, sndbuf, rate, pos);
+	Out.ar(0, vol*src*envgen);
+}).add;
+
+SynthDef(\b4f, {|freq = 45, vol = 0.7|
+	var src, envgen;
+	envgen = EnvGen.kr(Env.perc());
+	src = Pan2.ar(SinOsc.ar(freq));
+	Out.ar(0, src*envgen*vol);
 }).add;
 
 )
 
 // testing area
-Synth(\Grain);
-play{SinOsc.ar()}
+
+
 
 
 //
 
 fork{
 	
-	// a = Pbind(\instrument, \heli2,
-	// 	\freq, 45
-	// 	\dur, 2,
-	// 	\vol, 0.5
-	// );
+	a = Pbind(\instrument, \heli2,
+		\freq, 45,
+		\dur, 2,
+		\vol, 0.5
+	);
 	
 	b = Pbind(\instrument, \Grain,
 		\sndbuf, ~sample1,
@@ -63,34 +79,74 @@ fork{
 		\gDur, 0.01,
 		\dur, 0.1,
 		\impFreq, 45,
+		\vol, 2
 	);
 
-	Pdef(\c, c).play;
-	8.wait;
-	Pdef(\b, b).play;
+	~klk = Pbind(\instrument, \klk,
+		\sndbuf, ~sample2,
+		\pos, 0.94,
+		\gDur, 0.1,
+		\dur, Prand([0.1, 0.5, 1, 2, 4],  inf),
+		\rate, 1,
+		\impFreq, 20,
+		\vol, 2
+	);
+
+	~b4f = Pbind(\instrument, \b4f,
+		\freq, 45,
+		\dur, 0.5,
+		\vol, 0.1
+	);
+
+	Pdef(\klk, ~klk).play;
 	
+	5.do({
+		
+		Pdef(\c, c).play;
+		Pdef(\b, b).play;
+		Pdef(\d).pause;
+		
+		5.wait;
+		
+		Pdef(\c, Pbind(\instrument, \Grain2,
+			\sndbuf, ~sample1,
+			\pos, 0.92,
+			\gDur, 0.01,
+			\dur, 0.1,
+			\impFreq, 60,
+			\vol, 2
+		)).play;
+
+		5.wait;
+			
+	});
 	
+	Pdef(\b4f, ~b4f).play;
+
+	Pdef(\klk, Pbind(\instrument, \klk,
+		\sndbuf, ~sample2,
+		\pos, 0.94,
+		\gDur, 0.1,
+		\dur, 0.5,
+		\rate, 1,
+		\impFreq, 20,
+		\vol, Pseq([0, 2, 0 ,2], inf)
+	)).play;
+	
+	Pdef(\d, Pbind(\instrument, \Grain2,
+		\sndbuf, ~sample1,
+		\pos, 0.02,
+		\gDur, 0.01,
+		\dur, 0.1,
+		\impFreq, 45,
+		\vol, 0.01
+	)).play;
+	
+		
 }
 
-o = ServerOptions.new;
-o.memSize = 16400;
-o.memSize
+FreqScope.new(800)
 
-
-// add multiple sound files
-(
-var file, soundPath;
-~buffers = List[];
-Dialog.getPaths({|paths|
-	paths.do({|soundPath|
-	soundPath.postln;
-	~buffers.add(Buffer.read(s, soundPath););
-})
-})
-)
-
-~buffers[0].play;
-
-Synth(\Grain);
+// volumes need work
 
 s.quit;
