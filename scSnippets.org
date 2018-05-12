@@ -1,0 +1,81 @@
+* sc
+**  evaluation in org mode
+
+https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
+* snippets
+** first snippet start and stop audio
+#+BEGIN_SRC sclang
+  a = {SinOsc.ar()};
+  fork{
+      a.play;
+      3.wait;
+      thisProcess.stop;
+  }
+#+END_SRC
+
+#+RESULTS:
+: a = {SinOsc.ar()};
+: fork{
+:     a.play;
+:     3.wait;
+:     thisProcess.stop;
+: }
+** TODO 6-5-18_euclidean rhythms
+#+BEGIN_SRC sclang
+  (
+  v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
+  x = 6; // number of notes played this value should be 8 at most
+  ~interV = (v.size/x).round; //
+
+  for(1, v.size, {|i|
+      if(i%~interV == 0, {
+          v[i-1] = 1;
+      });
+      i.postln;
+  });
+
+  //v = v.rotate((~interV.asInteger/2).asInteger);
+  v.postln;
+
+  SynthDef(\jzf, {|freq = 89, vol = 0.5, envDur = 1, gate = 1|
+      var src, env;
+      env =  EnvGen.kr(Env.new([0, 1, 0], [envDur/2, envDur/2]), gate: 1, doneAction: 2);
+      src = SinOsc.ar([freq, freq]);
+      Out.ar(0, src * vol * 0.2 * env);
+  }).add;
+
+  SynthDef(\ioi, {| freq = 60, vol = 0.5|
+      var src, env;
+      env = EnvGen.kr(Env.perc());
+      src = LFTri.ar([freq, freq]);
+      Out.ar(0, src * vol * env);
+  }).add;
+
+
+  fork{
+
+      Pbind(\instrument, \ioi,
+          \dur, 1,
+          \freq, 60
+      ).play;
+
+
+      10.do({
+
+          v = v.rotate(5.rand);
+          v.postln;
+
+          Pdef(\nid1, Pbind(\instrument, \jzf,
+              \envDur, 1/4,
+              \dur, 1/4,
+              \vol, Pseq(v, inf),
+              \freq, 466,
+          )).play;
+          10.wait;
+
+      });
+
+  }
+
+  )
+#+END_SRC
