@@ -3,8 +3,6 @@
 s.boot;
 ~sample1 = Buffer.read(s, File.getcwd +/+ "samples/metallosamplemono.wav");
 ~sample2 = Buffer.read(s, File.getcwd +/+ "samples/scatemono.wav");
-// ~sample1.play;
-x = 0.5;
 /// Synth
 
 SynthDef(\heli2,{|freq = 50, vol = 0.6|
@@ -120,6 +118,8 @@ fork{
 		5.wait;
 			
 	});
+
+	Pdef(\a, a).play;
 	
 	Pdef(\b4f, ~b4f).play;
 
@@ -145,8 +145,9 @@ fork{
 		
 }
 
-FreqScope.new(800)
-
 // volumes need work
+
+// server memsize code has memory problem
+s.options.memSize = 16400;
 
 s.quit;
