@@ -45,9 +45,9 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       Out.ar(0, src * vol * 0.2 * env);
   }).add;
 
-  SynthDef(\ioi, {| freq = 60, vol = 0.5|
+  SynthDef(\ioi, {| freq = 60, vol = 0.5, envDur = 1|
       var src, env;
-      env = EnvGen.kr(Env.perc());
+      env = EnvGen.kr(Env.new([0, 1, 0], [envDur/2, envDur/2]), gate:1, doneAction: 2);
       src = LFTri.ar([freq, freq]);
       Out.ar(0, src * vol * env);
   }).add;
@@ -55,11 +55,11 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 
   fork{
 
-      Pbind(\instrument, \ioi,
+      Pdef(\ioi, Pbind(\instrument, \ioi,
+          \envDur, 1,
           \dur, 1,
           \freq, 60
-      ).play;
-
+      )).play;
 
       10.do({
 
