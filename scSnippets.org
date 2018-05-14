@@ -20,7 +20,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 :     3.wait;
 :     thisProcess.stop;
 : }
-** TODO 6-5-18_euclidean rhythms
+** 6-5-18_euclidean rhythms
 #+BEGIN_SRC sclang
   (
   v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
