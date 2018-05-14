@@ -24,7 +24,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 #+BEGIN_SRC sclang
   (
   v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
-  x = 6; // number of notes played this value should be 8 at most
+  x = 4; // number of notes played per loop. this value should be 8 at most
   ~interV = (v.size/x).round; //
 
   for(1, v.size, {|i|
