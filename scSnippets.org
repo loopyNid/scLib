@@ -24,19 +24,49 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 ** 6-5-18_euclidean rhythms
 #+BEGIN_SRC sclang
   (
-  v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
-  x = 4; // number of notes played per loop. this value should be 8 at most
-  ~interV = (v.size/x).round; //
-
-  for(1, v.size, {|i|
+  // tempo
+  ~tempo = 1;
+  ///////// patter init
+  //// v
+  ~v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
+  ~x = 5; // number of notes played per loop. this value should be 8 at most
+  ~interV = (~v.size/~x).round; //
+  for(1, ~v.size, {|i|
       if(i%~interV == 0, {
-          v[i-1] = 1;
+          ~v[i-1] = 1;
       });
       i.postln;
   });
 
+  ////// v1
+  ~v1 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
+  ~x1 = 4;
+  ~interV1 = (~v1.size/~x1).round; //
+
+  for(1, ~v1.size, {|i|
+      if(i%~interV1 == 0, {
+          ~v1[i-1] = 1;
+      });
+      i.postln;
+  });
+
+  ////// v2
+  ~v2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
+  ~x2 = 3;
+  ~interV2 = (~v2.size/~x2).round; //
+
+  for(1, ~v2.size, {|i|
+      if(i%~interV2 == 0, {
+          ~v2[i-1] = 1;
+      });
+      i.postln;
+  });
+
+
   //v = v.rotate((~interV.asInteger/2).asInteger);
-  v.postln;
+  ~v.postln;
+  ~v1.postln;
+  ~v2.postln;
 
   SynthDef(\jzf, {|freq = 89, vol = 0.5, envDur = 1, gate = 1|
       var src, env;
@@ -45,38 +75,93 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       Out.ar(0, src * vol * 0.2 * env);
   }).add;
 
-  SynthDef(\ioi, {| freq = 60, vol = 0.5, envDur = 1|
+  // SynthDef(\ioi, {| freq = 60, vol = 0.5, envDur = 1|
+  //     var src, env;
+  //     env = EnvGen.kr(Env.new([0, 1, 0], [envDur/2, envDur/2]), gate:1, doneAction: 2);
+  //     src = PinkNoise.ar([freq, freq]);
+  //     Out.ar(0, src * vol * 0.2 * env);
+  // }).add;
+
+  SynthDef(\ioi,{|freq = 50, vol = 0.6, envDur = 1|
+      var src, env, envgen;
+      env = Env.new([0, 1, 0],[envDur/2,envDur/2], \sine);
+      envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
+      src  = LFTri.ar([freq, freq],0,vol*(Pulse.ar(15,0.5)*SinOsc.ar(15)));
+      Out.ar(0, (vol)*src*envgen);
+  }).add;
+
+  SynthDef(\ioi1, {| freq = 60, vol = 0.5, envDur = 1|
       var src, env;
       env = EnvGen.kr(Env.new([0, 1, 0], [envDur/2, envDur/2]), gate:1, doneAction: 2);
-      src = LFTri.ar([freq, freq]);
-      Out.ar(0, src * vol * env);
+      src = SinOsc.ar([freq, freq], 0.4);
+      Out.ar(0, src * vol * 0.2 * env);
   }).add;
 
 
   fork{
 
+      j = Scale.phrygian;
+
       Pdef(\ioi, Pbind(\instrument, \ioi,
-          \envDur, 1,
-          \dur, 1,
-          \freq, 60
+          \envDur, ~tempo,
+          \dur, ~tempo,
+          \freq, 60,
+          \vol, 1
       )).play;
 
-      10.do({
+      6.wait;
 
-          v = v.rotate(5.rand);
-          v.postln;
+      inf.do({
+
 
           Pdef(\nid1, Pbind(\instrument, \jzf,
-              \envDur, 1/4,
-              \dur, 1/4,
-              \vol, Pseq(v, inf),
+              \envDur, ~tempo/4,
+              \dur, ~tempo/4,
+              \vol, Pseq(~v, inf),
               \freq, 466,
           )).play;
+
           10.wait;
+
+          Pdef(\nid2, Pbind(\instrument, \ioi,
+              \envDur, ~tempo/4,
+              \dur, ~tempo/4,
+              \vol, Pseq(~v1, inf),
+              \freq, 329.63
+          )).play;
+
+          10.wait;
+
+          Pdef(\nid3, Pbind(\instrument, \ioi,
+              \envDur, ~tempo/4,
+              \dur, ~tempo/4,
+              \vol, Pseq(~v2, inf),
+              \degree, Prand([0, 1, 3, 5, 7, 9], inf),
+              \scale, Pfunc({ j }, inf),
+              \root, -1,
+          )).play;
+
+          10.wait;
+
+          ~tempo = ~tempo - 0.01;
 
       });
 
   }
 
   )
+
+  //play{Blip.ar([WhiteNoise.kr(10)*5, WhiteNoise.kr(10)*(SinOsc.ar(50) * 10)])};
+
+  ~v.postln;
+
+  ~v = ~v.rotate(1);
+
+  ~v1.postln;
+
+  ~v1 = ~v1.rotate(2);
+
+  ~v2.postln;
+
+  ~v2 = ~v2.rotate(5);
 #+END_SRC
