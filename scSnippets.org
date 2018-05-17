@@ -173,6 +173,14 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 
   ~sample = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/santoriniPort.wav");
 
+  SynthDef(\6, {|amp = 0.5, rate = 1, starP = 0|
+      var src;
+      src = PlayBuf.ar(2, 3, rate, 1, starP, 0, doneAction: 2);
+      Out.ar(0, src * amp);
+  }).play;
+
+  {PlayBuf.ar(2, 3)}
+
   SynthDef(\1, {| freq = 300, amp = 0.5, eDur = 1|
       var src, env;
       env = EnvGen.kr(Env.new([0, 1, 0], [eDur/2,eDur/2]), gate: 1, doneAction:2);
