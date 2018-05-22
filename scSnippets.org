@@ -327,6 +327,129 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   ).play(quant: 1);
   )
 #+END_SRC
+** 18-5-18
+#+BEGIN_SRC sclang
+  (
+  //// v
+  ~v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
+  ~x = 3; // number of notes played per loop. this value should be 8 at most
+  ~interV = (~v.size/~x).round; //
+  for(1, ~v.size, {|i|
+      if(i%~interV == 0, {
+          ~v[i-1] = 1;
+      });
+      i.postln;
+  });
+  )
+  (
+  //// v1
+  ~v1 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
+  ~x = 4; // number of notes played per loop. this value should be 8 at most
+  ~interV = (~v1.size/~x).round; //
+  for(1, ~v1.size, {|i|
+      if(i%~interV == 0, {
+          ~v1[i-1] = 1;
+      });
+      i.postln;
+  });
+  )
+  (
+  TempoClock.default.tempo = 200/60;
+
+  t = TempoClock.default.tempo;
+
+  ~sample = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/santoriniPort.wav");
+  ~sample1 = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/scatemono.wav");
+
+
+  SynthDef(\hello, {|rate, trigger, stP, loop, amp, eDur, dur |
+      var src, env;
+      env = EnvGen.kr(Env.new([0,1,0],[dur/2,dur/2]), gate: 1, doneAction: 2);
+      src = PlayBuf.ar(1, 7, rate, trigger, stP, loop, doneAction: 2);
+      Out.ar(0,Pan2.ar(src)  * env * amp *2);
+  }).add;
+
+  SynthDef(\hell, {|rate, trigger, stP, loop, amp, eDur, dur |
+      var src, env;
+      env = EnvGen.kr(Env.new([0,1,0],[dur/2,dur/2]), gate: 1, doneAction: 2);
+      src = PlayBuf.ar(2, 0, rate, trigger, stP, loop, doneAction: 2);
+      Out.ar(0,src * env  * amp);
+  }).add;
+
+  SynthDef(\hel, {|freq, amp, eDur|
+      var src, env;
+      env = EnvGen.kr(Env.perc(), gate: 1, doneAction: 2);
+      src = LFTri.ar(freq).softclip;
+      Out.ar(0, Pan2.ar(src) * env * amp);
+  }).add;
+
+  SynthDef(\hel1, {|freq, amp, eDur|
+      var src, env;
+      env = EnvGen.kr(Env.perc(), gate: 1, doneAction: 2);
+      src = LFTri.ar(freq, 0, amp/2) + LFSaw.ar(freq, 0, amp/2);
+      Out.ar(0, Pan2.ar(src) * env * amp);
+  }).add;
+
+  SynthDef(\hel11, {|freq, amp, eDur|
+      var src, env;
+      env = EnvGen.kr(Env.perc(), gate: 1, doneAction: 2);
+      src =  FreeVerb.ar(Blip.ar(freq) + SinOsc.ar(freq));//SinOsc.ar(freq);
+      Out.ar(0, Pan2.ar(src) * env * amp);
+  }).add;
+
+  )
+
+
+
+  (
+  Pdef(\1, Pbind(\instrument, \hel,
+      \dur, 1,
+      \amp, Pseq([ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ],inf),
+      \midinote, Pseq([28], inf)
+  )).play(quant: 1);
+  )
+  (
+  ~v = ~v.rotate(1);
+  Pdef(\11, Pbind(\instrument, \hel1,
+      \dur, 0.5,
+      \amp, Pseq(~v, inf) * 0.3,
+      \midinote, Pseq([[40, 47]], inf)
+  )).play(quant: 1);
+  )
+  (
+  ~v1 = ~v1.rotate(1);
+  Pdef(\111, Pbind(\instrument, \hel11,
+      \dur, 0.5,
+      \amp, Pseq(~v1, inf) * 0.3,
+      \midinote, Pseq([[43, 46, 59]], inf)
+  )).play(quant: 1);
+  )
+
+  (
+  Pdef(\2, Pbind(\instrument, \hell,
+      \amp, 0.2,
+      \dur, 2,
+      \rate, Pseq([16,8,4,8], inf),
+      \trigger, 1,
+      \stP, 0.33,//Pseq([0.33, 0.66, 0.5], inf),
+      \loop, 0
+  )).play(quant: 1);
+  )
+
+  (
+  Pdef(\3, Pbind(\instrument, \hello,
+      \amp, 2,
+      \dur, 2,
+      \rate, 0.5,//Pseq([16,8,4,8], inf),
+      \trigger, 1,
+      \stP, 0.66,//Pseq([0.33, 0.66, 0.5], inf),
+      \loop, 0
+  )).play(quant: 1);
+  )
+
+  )
+  ~v1.postln;
+#+END_SRC
 * sc examples
 ** 17-5-18 (Pxrand([Pmono…], inf).play(quant:1); example - tempo - techno)
 #+BEGIN_SRC sclang
