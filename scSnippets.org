@@ -365,7 +365,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   SynthDef(\hello, {|rate, trigger, stP, loop, amp, eDur, dur |
       var src, env;
       env = EnvGen.kr(Env.new([0,1,0],[dur/2,dur/2]), gate: 1, doneAction: 2);
-      src = PlayBuf.ar(1, 7, rate, trigger, stP, loop, doneAction: 2);
+      src = PlayBuf.ar(1, 1, rate, trigger, stP, loop, doneAction: 2);
       Out.ar(0,Pan2.ar(src)  * env * amp *2);
   }).add;
 
@@ -380,7 +380,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       var src, env;
       env = EnvGen.kr(Env.perc(), gate: 1, doneAction: 2);
       src = LFTri.ar(freq).softclip;
-      Out.ar(0, Pan2.ar(src) * env * amp);
+      Out.ar(0, Pan2.ar(src) * env * amp * 0.4);
   }).add;
 
   SynthDef(\hel1, {|freq, amp, eDur|
@@ -412,7 +412,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   ~v = ~v.rotate(1);
   Pdef(\11, Pbind(\instrument, \hel1,
       \dur, 0.5,
-      \amp, Pseq(~v, inf) * 0.3,
+      \amp, Pseq(~v, inf) * 0.5,
       \midinote, Pseq([[40, 47]], inf)
   )).play(quant: 1);
   )
@@ -420,14 +420,14 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   ~v1 = ~v1.rotate(1);
   Pdef(\111, Pbind(\instrument, \hel11,
       \dur, 0.5,
-      \amp, Pseq(~v1, inf) * 0.3,
-      \midinote, Pseq([[43, 46, 59]], inf)
+      \amp, Pseq(~v1, inf) * 0.05,
+      \midinote, Prand([55], inf)
   )).play(quant: 1);
   )
 
   (
   Pdef(\2, Pbind(\instrument, \hell,
-      \amp, 0.2,
+      \amp, 0.1,
       \dur, 2,
       \rate, Pseq([16,8,4,8], inf),
       \trigger, 1,
@@ -438,7 +438,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 
   (
   Pdef(\3, Pbind(\instrument, \hello,
-      \amp, 2,
+      \amp, 1.5,
       \dur, 2,
       \rate, 0.5,//Pseq([16,8,4,8], inf),
       \trigger, 1,
@@ -448,7 +448,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   )
 
   )
-  ~v1.postln;
+  s.boot
 #+END_SRC
 * sc examples
 ** 17-5-18 (Pxrand([Pmono…], inf).play(quant:1); example - tempo - techno)
@@ -629,4 +629,134 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   Ppar([p, q, r, o]).play;
   )
 
+#+END_SRC
+** 22-5-18
+#+BEGIN_SRC sclang
+  (
+  var synth;
+  synth= {| carrfreq=440, modfreq=1, moddepth=0.01|
+  SinOsc.ar(carrfreq + MouseX.kr(moddepth, 5000, 'exponential')*SinOsc.ar(MouseY.kr(modfreq, 10000, 'exponential')),0,0.25)
+  }.scope;
+  )
+
+  (
+  SynthDef(\1, {|carrfreq = 440, modfreq = 1, moddepth = 0.01, amp|
+      var src;
+      src = SinOsc.ar(carrfreq + modfreq*SinOsc.ar(modfreq),0,0.25);
+      Out.ar(0, Pan2.ar(src) * amp);
+  }).add;
+  )
+  (
+  Pdef(\nid, Pbind(\instrument, \1,
+      \dur, 0.2,
+      \carrfreq, Pseq([10000,5000,2500,1250], inf),
+      \modfreq, Pseq([1000, 2000, 4000, 8000], inf),
+      \amp , 0.1
+  )).play;
+  )
+
+  (
+  //This example is from The SuperCollider Book (Wilson, 2011 p.37)
+  {
+
+      Mix.ar(
+      Array.fill(12,
+          {|count|
+          var harm;
+          harm = count + 1 * 110; // remeber precedence: count + 1, then * 110
+              SinOsc.ar(harm, mul: max(0,  SinOsc.kr(count+1/4))
+              )*1/(count+1)
+  })
+
+  )*0.7
+
+
+  }.play;
+  )
+
+  (
+  SynthDef(\2, {|amp = 0.5, harm|
+      var src;
+      src = {
+
+          Mix.ar(
+              Array.fill(12,
+                  {|count|
+                      harm = count + 1 * 110; // remeber precedence: count + 1, then * 110
+                      SinOsc.ar(harm, mul: max(0,  SinOsc.kr(count+1/4))
+                      )*1/(count+1)
+                  })
+
+          )*0.7
+
+
+      };
+      Out.ar(0, src);
+  }).add;
+  )
+
+  Synth(\2);
+  (
+  Pdef(\nid2, Pbind(\instrument, \2,
+
+  )).play
+  )
+
+  b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
+
+  (
+  {
+      var trate, dur, clk, pos, pan;
+      trate = MouseY.kr(8,120,1);
+      dur = 12 / trate;
+      clk = Impulse.kr(trate);
+      pos = MouseX.kr(0,BufDur.kr(b)) + TRand.kr(0, 0.01, clk);
+      pan = WhiteNoise.kr(0.6);
+      TGrains.ar(2, clk, b, 1, pos, dur, pan, 0.1);
+  }.scope(2, zoom: 4);
+  )
+
+  (
+  SynthDef(\3, {|trate, pos|
+      var src;
+      src = {
+      var  dur, clk, pan;
+      // trate = MouseY.kr(8,120,1);
+      dur = 12 / trate;
+      clk = Impulse.kr(trate);
+      // pos = MouseX.kr(0,BufDur.kr(b)) + TRand.kr(0, 0.01, clk);
+      pan = WhiteNoise.kr(0.6);
+      TGrains.ar(2, clk, b, 1, pos, dur, pan, 0.1);
+      };
+      Out.ar(0, src);
+  }).add;
+  )
+
+  Synth(\3);
+  (
+  Pdef(\nid3, Pbind(\instrument, \3,
+      \dur, 10,
+      \trate, Pseq([100, 80, 120, 40],inf),
+      \pos, Prand([0.234524, 0.457568756, 0.345624576778, 0.9876673])
+  )).play;
+  )
+
+  (
+  b = Buffer.alloc(s, 512, 1, {| buf | buf.sine1Msg(1.0/[1,2,3,4,5,6,7,8,9,10])});
+  { LPF.ar(COsc.ar(b.bufnum, [200.rand.postln, 1000.rand], 0.7, 0.25)*Saw.ar(440+444.rand, WhiteNoise.kr(0.7)), 4000) }.play;
+  )
+
+  (
+  SynthDef(\4, {|dur, amp, nid, nid1, nid3|
+      var src;
+      src = { LPF.ar(COsc.ar(b.bufnum, [nid, nid1], 0.7, 0.25)*Saw.ar(nid3, WhiteNoise.kr(amp)), 4000) };
+      Out.ar(0, src);
+  }).add;
+  )
+
+  Pdef(\nid4, Pbind(\instrument, \4,
+      \nid, Pseq([100, 1000, 10000], inf),
+      \nid1, Pseq([2000, 2300, 2200], inf),
+      \nid3, 300
+  )).play;
 #+END_SRC
