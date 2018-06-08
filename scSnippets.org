@@ -474,8 +474,9 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   )
   s.boot
 #+END_SRC
-** COMMENT 28-5-18
+** 28-5-18 ( ERGASIA )
 #+BEGIN_SRC sclang
+  // euclidean rhythm init-----------------------------------------------
   (
   //// v
   ~v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
@@ -487,8 +488,8 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       });
       i.postln;
   });
-  )
-  (
+
+
   //// v1
   ~v1 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 16th note array
   ~x = 4; // number of notes played per loop. this value should be 8 at most
@@ -499,13 +500,15 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       });
       i.postln;
   });
-  )
-  f = 150/60;
-  ~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
-  ~buffer = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+
+  //---------------------------------------------------------------------
+  f = 150/60; // tempo start bps.
+  // elementary cellular automata
+  ~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];// elementary cellular automata initial state
+  ~buffer = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];// ECA evolution algorhythm buffer
   ~patt = [[[1,1,1], 0], [[1,1,0], 1], [[1,0,1], 1], [[1,0,0], 0], [[0,1,1], 1], [[0,1,0], 1], [[0,0,1], 1], [[0,0,0], 0]];// rule 110
-  (
-  ~ecae = {
+
+  ~ecae = { // ECA evolution
           for(0, ~ecaa.size - 1,{|i|
           if(i == 0,{
                           ~pre = ~ecaa[~ecaa.size - 1];
@@ -533,10 +536,10 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
           ~ecaa = ~buffer;
           ~ecaa.postln;
   };
-  )
+
   ~ecae.value();
 
-  (
+
   TempoClock.default.tempo = f;//300/60;
 
   t = TempoClock.default.tempo;
@@ -544,7 +547,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   ~sample = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/santoriniPort.wav");
   ~sample1 = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/scatemono.wav");
   ~sample2 = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/metallosamplemono.wav");
-
+  // synthDefs
   SynthDef(\hello, {|rate, trigger, stP, loop, amp, eDur, dur |
       var src, env;
       env = EnvGen.kr(Env.new([0,1,0],[dur/2,dur/2]), gate: 1, doneAction: 2);
@@ -583,7 +586,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   SynthDef(\hel11, {|freq, amp, eDur|
       var src, env;
       env = EnvGen.kr(Env.perc(), gate: 1, doneAction: 2);
-      src =  FreeVerb.ar(Blip.ar(freq) + SinOsc.ar(freq));//SinOsc.ar(freq);
+      src =  FreeVerb.ar(Blip.ar(freq) + SinOsc.ar(freq));
       Out.ar(0, Pan2.ar(src) * env * amp);
   }).add;
 
@@ -601,7 +604,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
           Out.ar(0, Pan2.ar(src * env));
   }).add;
   )
-
+  // eca next evolution - tempo control
   (
   fork{
           inf.do({
@@ -613,6 +616,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
           });
   };
   )
+  // euclidean rhythm rotations
   (
   fork{
           inf.do({
@@ -647,7 +651,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
           });
   };
   )
-
+  // controls
   (
   Pdef(\1, Pbind(\instrument, \hel,
       \dur, 1,
