@@ -474,7 +474,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   )
   s.boot
 #+END_SRC
-** 28-5-18
+** COMMENT 28-5-18
 #+BEGIN_SRC sclang
   (
   //// v
@@ -500,8 +500,44 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       i.postln;
   });
   )
+  f = 150/60;
+  ~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~buffer = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~patt = [[[1,1,1], 0], [[1,1,0], 1], [[1,0,1], 1], [[1,0,0], 0], [[0,1,1], 1], [[0,1,0], 1], [[0,0,1], 1], [[0,0,0], 0]];// rule 110
   (
-  TempoClock.default.tempo = 300/60;
+  ~ecae = {
+          for(0, ~ecaa.size - 1,{|i|
+          if(i == 0,{
+                          ~pre = ~ecaa[~ecaa.size - 1];
+                          ~main = ~ecaa[i];
+                          ~next = ~ecaa[i + 1]
+          },{
+                          if(i == (~ecaa.size - 1),{
+                                  ~pre = ~ecaa[i - 1];
+                                  ~main = ~ecaa[i];
+                                  ~next = ~ecaa[0];
+                          },{
+                                  ~pre = ~ecaa[i - 1];
+                                  ~main = ~ecaa[i];
+                                  ~next = ~ecaa[i + 1];
+                          });
+
+          });
+          ~comArr = [~pre, ~main, ~next];
+          for(0, ~patt.size -1,{|j|
+                          if(~comArr == ~patt[j][0], {
+                                  ~buffer[i] = ~patt[j][1];
+                          });
+          });
+          });
+          ~ecaa = ~buffer;
+          ~ecaa.postln;
+  };
+  )
+  ~ecae.value();
+
+  (
+  TempoClock.default.tempo = f;//300/60;
 
   t = TempoClock.default.tempo;
 
@@ -533,7 +569,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   SynthDef(\hel2, {|freq, amp, eDur, dur|
       var src, env;
       env = EnvGen.kr(Env.new([0,1,0],[dur/8,dur/3]), gate: 1, doneAction: 2);
-      src = FreeVerb.ar(LFTri.ar(freq) + LFSaw.ar(freq, 0, amp/7), mix: 0.9, room: 1, damp: 0.6);
+      src = FreeVerb.ar(LFTri.ar(freq) + LFSaw.ar(freq, 0, amp/6 + Dust.ar).softclip, mix: 0.9, room: 1, damp: 0.6);
       Out.ar(0, Pan2.ar(src) * env * amp);
   }).add;
 
@@ -554,39 +590,91 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   SynthDef(\hel111, {|freq, amp, dur, eDur, trigger, rate, pos|
       var src, env;
       env = EnvGen.kr(Env.new([0, 1, 0], [0, dur]), gate: 1, doneAction: 2);
-      src = GrainBuf.ar(2, trigger, dur, 6, rate, pos, 2, mul: amp);
+      src = GrainBuf.ar(2, trigger, dur, 2, rate, pos, 2, mul: amp);
       Out.ar(0, src);
+  }).add;
+
+  SynthDef(\hel1111,{|freq = 440, amp = 0.5|
+          var src, env;
+          env = EnvGen.kr(Env.perc(),gate: 1, doneAction: 2);
+          src = SinOsc.ar(freq, 0, amp);
+          Out.ar(0, Pan2.ar(src * env));
   }).add;
   )
 
+  (
+  fork{
+          inf.do({
+                  16.wait;
+                          ~ecae.value();
+                          f = f + 0.05;
+                          TempoClock.default.tempo = f;
+                          f.postln;
+          });
+  };
+  )
+  (
+  fork{
+          inf.do({
+                  64.wait;
+                  ~v = ~v.rotate(5.rand);
+                  "rotate v".post;
+                  ~v.postln;
+
+                  Pdef(\112, Pbind(\instrument, \hel1,
+                          \dur, 2,
+                          \amp, Pseq(~v, inf) * 0.2,
+                          \midinote, Pseq([[43]], inf)
+                  )).play(quant: 1);
+
+          });
+  };
+  )
+  (
+  fork{
+          inf.do({
+                  64.wait;
+                  ~v1 = ~v1.rotate(5.rand);
+                  "rotate v1".post;
+                  ~v1.postln;
+
+                  Pdef(\111, Pbind(\instrument, \hel11,
+                          \dur, 1,
+                          \amp, Pseq(~v1, inf) * 0.2,
+                          \midinote, Prand([48], inf)
+                  )).play(quant: 1);
+
+          });
+  };
+  )
 
   (
   Pdef(\1, Pbind(\instrument, \hel,
       \dur, 1,
-      \amp, Pseq([ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ],inf ) * 0.7,
+      \amp, Pseq([ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ],inf ) * 0.4,
       \midinote, Pseq([28], inf)
   )).play(quant: 1);
   )
   (
-  ~v = ~v.rotate(1);
   Pdef(\11, Pbind(\instrument, \hel1,
       \dur, 0.5,
-      \amp, Pseq(~v, inf) * 0.4,
+      \amp, Pseq(~ecaa, inf) * 0.2,
       \midinote, Pseq([[40, 47]], inf)
   )).play(quant: 1);
   )
   (
-  ~v1 = ~v1.rotate(1);
-  Pdef(\111, Pbind(\instrument, \hel11,
-      \dur, 0.5,
-      \amp, Pseq(~v1, inf) * 0.15,
-      \midinote, Prand([43], inf)
-  )).play(quant: 1);
+  j = Scale.phrygian;
+  Pdef(\118, Pbind(\instrument, \hel1,
+      \dur, 1,//Prand([0.25, 0.5, 1], inf),
+      \amp, Pseq(~ecaa, inf) * 0.2,
+          \degree, Prand([0,1,3,4,5,7,9], inf),
+          \scale, Pfunc({ j }, inf),
+          \root, 4
+  )).stop(quant: 1);
   )
-
   (
   Pdef(\2, Pbind(\instrument, \hell,
-      \amp, 0.4,
+      \amp, 0.1,
       \dur, 2,
       \rate, Pseq([16,8,4,8], inf),
       \trigger, 1,
@@ -597,7 +685,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 
   (
   Pdef(\3, Pbind(\instrument, \hello,
-      \amp, 1.5,
+      \amp, 2,
       \dur, 2,
       \rate, 0.5,//Pseq([16,8,4,8], inf),
       \trigger, 1,
@@ -608,8 +696,8 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 
   (
   Pdef(\4, Pbind(\instrument, \hel111,
-      \amp, 0.2,
-      \dur, 0.02,
+      \amp, 1,
+      \dur, 1,
       \rate, Pseq([16,8,8,2,8,8,16], inf),
       \trigger, 1,
       \pos, 0.1,//Pseq([0.33, 0.66, 0.5], inf),
@@ -618,11 +706,11 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 
   (
   Pdef(\5, Pbind(\instrument, \hel2,
-      \amp, 0.3,
-      \dur, 8,
+      \amp, 0.4,
+      \dur, 0.2,
       \eDur, 1,
       \midinote, Pseq([[74,62], [76,64], [77, 65]], inf)
-  )).play(quant: 1);
+  )).stop(quant: 1);
   )
 
   (
@@ -630,14 +718,48 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       \amp, 0.2,
       \dur, Pseq([16,16,32],inf),
       \eDur, 1,
-      \midinote, Pseq([[74,62], [76,64], [77, 65]], inf)
+      //\midinote, Pseq([[74,62], [76,64], [77, 65]], inf)
+          \degree, Prand([0,1,3,4,5,7,9], inf),
+          \scale, Pfunc({ j }, inf),
+          \root, 28
   )).play(quant: 1);
   )
   )
-  s.boot
+  s.boot;
+#+END_SRC
+** 7-6-18 (basic eca algo)
+#+BEGIN_SRC sclang
+  s.boot;
+  ~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~buffer = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~patt = [[[1,1,1], 0], [[1,1,0], 1], [[1,0,1], 1], [[1,0,0], 0], [[0,1,1], 1], [[0,1,0], 1], [[0,0,1], 1], [[0,0,0], 0]];// rule 110
+  (
+  for(0, ~ecaa.size - 1,{|i|
+          if(i == 0,{
+                  ~pre = ~ecaa[~ecaa.size - 1];
+                  ~main = ~ecaa[i];
+                  ~next = ~ecaa[i + 1]
+          },{
+                  if(i == (~ecaa.size - 1),{
+                          ~pre = ~ecaa[i - 1];
+                          ~main = ~ecaa[i];
+                          ~next = ~ecaa[0];
+                  },{
+                          ~pre = ~ecaa[i - 1];
+                          ~main = ~ecaa[i];
+                          ~next = ~ecaa[i + 1];
+                  });
 
-
-
+          });
+          ~comArr = [~pre, ~main, ~next];
+          for(0, ~patt.size -1,{|j|
+                  if(~comArr == ~patt[j][0], {
+                          ~buffer[i] = ~patt[j][1];
+                  });
+          });
+  });
+  ~ecaa = ~buffer;
+  )
 
 #+END_SRC
 * sc examples
