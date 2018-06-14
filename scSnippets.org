@@ -766,6 +766,45 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   )
 
 #+END_SRC
+** 16-6-18
+#+BEGIN_SRC sclang
+  s.boot;
+  ~sample2 = Buffer.read(s, Platform.userHomeDir +/+ "scLib/samples/metallosamplemono.wav");
+
+  (
+  SynthDef(\latem, {|amp 0.5, dur = 1, sndbuf = 0, rate = 1, pos = 0.3, cFreq = 10|
+          var src, env;
+          env = EnvGen.kr(Env.new([0,1,0],[(3*dur)/5, (3*dur)/5]), gate: 1, doneAction: 2);
+          src = GrainBuf.ar(2, Impulse.kr(cFreq), dur, sndbuf, rate, pos, mul: amp);
+          Out.ar(0, Pan2.ar(src));
+  }).add;
+  )
+  //one liners :P
+  (
+  play{Pan2.ar(Dust.ar(2000) * Blip.ar(WhiteNoise.ar()))};
+  play{Pan2.ar(LFTri.ar(60) * SinOsc.kr(Line.kr(20 * SinOsc.kr(0.001))))};
+  play{Pan2.ar(HPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 3000), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.1)};
+  play{Pan2.ar(LPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 600), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.2)};
+  play{Pan2.ar(SinOsc.ar(432, mul: 0.3))};
+  (
+  Pdef(\1, Pbind(\instrument, \latem,
+          \amp, 2,
+          \dur, 0.1,
+          \pos, 0.7,
+          \cFreq, 1000,
+  )).play;
+  )
+
+  (
+  fork{
+          100.do({
+                  2.wait;
+                          play{Pan2.ar(HPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 3000), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.1)};
+                          play{Pan2.ar(LPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 600), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.2)};
+          });
+  }
+  )
+#+END_SRC
 * sc examples
 ** 17-5-18 (Pxrand([Pmono…], inf).play(quant:1); example - tempo - techno)
 #+BEGIN_SRC sclang
