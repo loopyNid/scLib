@@ -782,7 +782,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   //one liners :P
   (
   play{Pan2.ar(Dust.ar(2000) * Blip.ar(WhiteNoise.ar()))};
-  play{Pan2.ar(LFTri.ar(60) * SinOsc.kr(Line.kr(20 * SinOsc.kr(0.001))))};
+  play{Pan2.ar(LFTri.ar(60) * SinOsc.kr(Line.kr(20 * SinOsc.kr(1))))};
   play{Pan2.ar(HPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 3000), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.1)};
   play{Pan2.ar(LPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 600), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.2)};
   play{Pan2.ar(SinOsc.ar(432, mul: 0.3))};
@@ -801,6 +801,121 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
                   2.wait;
                           play{Pan2.ar(HPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 3000), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.1)};
                           play{Pan2.ar(LPF.ar(Dust.ar(SinOsc.kr(50) * 2000), freq: 600), pos: SinOsc.kr(WhiteNoise.kr) * SinOsc.kr(1), level: 0.2)};
+          });
+  }
+  )
+#+END_SRC
+** COMMENT 29-6-18
+#+BEGIN_SRC sclang
+  // to do change frequency in array
+  s.boot
+  TempoClock.default.tempo = 100/60;
+  // eca
+  (
+  ~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~buffer = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~ecafreq = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~patt = [[[1,1,1], 0], [[1,1,0], 1], [[1,0,1], 1], [[1,0,0], 0], [[0,1,1], 1], [[0,1,0], 1], [[0,0,1], 1], [[0,0,0], 0]];// rule 110
+  ~ecae =  {(
+          for(0, ~ecaa.size - 1,{|i|
+                  if(i == 0,{
+                          ~pre = ~ecaa[~ecaa.size - 1];
+                          ~main = ~ecaa[i];
+                          ~next = ~ecaa[i + 1]
+                  },{
+                          if(i == (~ecaa.size - 1),{
+                                  ~pre = ~ecaa[i - 1];
+                                  ~main = ~ecaa[i];
+                                  ~next = ~ecaa[0];
+                          },{
+                                  ~pre = ~ecaa[i - 1];
+                                  ~main = ~ecaa[i];
+                                  ~next = ~ecaa[i + 1];
+                          });
+                  });
+                  ~comArr = [~pre, ~main, ~next];
+                  for(0, ~patt.size -1,{|j|
+                          if(~comArr == ~patt[j][0], {
+                                  ~buffer[i] = ~patt[j][1];
+                          });
+                  });
+                  ~ecafreq[i] = ~ecaa[i] * (i + 1);
+          });
+          ~ecaa = ~buffer;
+          ~ecafreq;
+          ~ecaa;
+  )};
+  )
+  ~ecae.value
+  (
+  SynthDef(\1,{| amp = 0.5 , dur = 0.5, freq = 60|
+          var src, env;
+          env = EnvGen.kr(Env.new([0,1,0], [dur/2, dur/2]), gate:1 , doneAction: 2);
+          src = LFTri.ar(freq) + SinOsc.ar(freq);
+          Out.ar(0, Pan2.ar(FreeVerb.ar(src)  * env) * amp);
+  }).add;
+  )
+  (
+  SynthDef(\11,{| amp = 0.5 , dur = 0.5, freq = 60|
+          var src, env;
+          env = EnvGen.kr(Env.new([0,1,0], [dur/5, 4*dur/5]), gate:1 , doneAction: 2);
+          src = LFTri.ar(freq) + SinOsc.ar(freq);
+          Out.ar(0, Pan2.ar(src  * env, SinOsc.kr(1)) * amp);
+  }).add;
+  )
+  (
+  SynthDef(\2,{| amp = 0.5 , dur = 10|
+          var src;
+          src = Blip.ar(BrownNoise.ar() * 200 * WhiteNoise.ar()) ;
+          Out.ar(0, Pan2.ar(src) * amp);
+  }).add;
+  )
+  (
+  SynthDef(\3,{| amp = 0.5 , dur = 0.5, freq = 60|
+          var src, env;
+          env = EnvGen.kr(Env.new([0,1,0], [dur/5, 4*dur/5]), gate:1 , doneAction: 2);
+          src = SinOsc.ar(110);
+          Out.ar(0, Pan2.ar(src  * env) * amp);
+  }).add;
+  )
+  (
+  SynthDef(\4,{|amp = 0.5, freq = 440|
+          var src, env;
+          env = EnvGen.kr(Env.perc(0.01, 1), gate: 1, doneAction: 2);
+          src = Blip.ar(1, mul: 2) + FreeVerb.ar(RHPF.ar(WhiteNoise.ar(0.01), 3200));
+          Out.ar(0, Pan2.ar(src * env * amp));
+  }).play;
+  )
+  (
+  Pdef(\thg3,
+          Pbind(\instrument, \11,
+                  \freq, 65.41,
+                  \dur, 5,
+                  \amp, 0.5
+          )
+  ).play;
+  )
+  (
+  Pdef(\thg2, Pbind(\instrument, \4,
+          \amp, 3,
+          \dur, Prand([1, 0.5, 2], inf),
+  )).play(quant: 1);
+  )
+  (
+  j = Scale.mixolydian;
+  fork{
+          inf.do({
+                  10.wait;
+                  ("routine").postln;
+                  ~ecae.value();
+                  ~ecaa.postln;
+                  ~ecafreq.postln;
+                  Pdef(\thg4, Pbind(\instrument, \1,
+                          \dur, Prand([0.01, 0.05], inf),
+                          \amp, 0.01,
+                          \degree, ~ecafreq,
+                          \scale, Pfunc({j},inf),
+                  )).play(quant: 1);
           });
   }
   )
