@@ -21,6 +21,460 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
 :     thisProcess.stop;
 : }
 
+** 7-4-18
+#+BEGIN_SRC sclang
+  // play{Blip.ar([WhiteNoise.kr(10)*5, WhiteNoise.kr(10)*(SinOsc.ar(50) * 10)])};
+
+  // play{SinOsc.ar([WhiteNoise.kr(10)*200, WhiteNoise.kr(10)*(SinOsc.ar(50) * 10)])};
+
+  // play{Blip.ar([10,10]) + Blip.ar([20,20])}
+
+  // play{BrownNoise.ar([0.01, 0.01])}
+
+  // play{Impulse.ar(Impulse.kr(10) * 300)}
+
+  // play{Saw.ar()};
+
+  // play{LFPar.ar([45, 45]) * LFTri.ar(90)};
+
+  (
+  SynthDef(\NID,{arg freq = 300, freqK = 10, vol=0.6;
+          var src;
+          var env;
+          var envgen;
+          env = Env.perc(0.001, 1, 0.6, -4);
+          envgen = EnvGen.kr(env, gate:1, doneAction:2);
+          src = SinOsc.ar(freq , 0, envgen * vol);
+          Out.ar([1, -1],src)
+  }).add;
+  )
+
+  Synth(\NID)
+  // (
+  // SynthDef(\NID1,{arg vol = 0.7;
+  // 	//envelope
+  // 	var env;
+  // 	var src;
+  // 	var envgen;
+  // 	env = Env.perc(0.001, 1, 0.6, -4);
+  // 	envgen = EnvGen.kr(env, gate:1, doneAction:2);
+  // 	src = Blip.ar([(ClipNoise.kr(10)*5) * envgen]);//, (WhiteNoise.kr(10)*5) * envgen]);
+  // 	Out.ar([1, -1],
+  // 		FreeVerb.ar(src, 0.33, 2))
+  // }).add;
+  // )
+
+  (
+  SynthDef(\NID3,{arg freq= 45, vol=0.6;
+          //envelope
+          var env;
+          var src;
+          var envgen;
+          env = Env.perc(0.2, 2, 1, -4);
+          envgen = EnvGen.kr(env, gate:1, doneAction:2);
+          src = LFPar.ar([freq, freq], 0, vol * envgen) * LFTri.ar(freq * 2);
+          Out.ar(0,
+                  FreeVerb.ar(src, 0.33, 1, 1))
+  }).add;
+  SynthDef(\NID4,{arg freq = 300, vol=0.6;
+          var src;
+          var env;
+          var envgen;
+          env = Env.perc(0.001, 1.6, 0.6, -4);
+          envgen = EnvGen.kr(env, gate:1, doneAction:2);
+          src = SinOsc.ar(freq , 0, envgen * vol) + Saw.ar(freq , 0, envgen * vol);
+          Out.ar([1, -1],src)
+  }).add;
+  )
+  (
+  r = Routine({
+
+          j = Scale.phrygian;
+
+          k = Prand([0.35, 0.7, 1.05, 1.4], inf);
+
+          ~nid  = Pbind(
+                  \instrument, \NID,
+                  \degree, Prand([0, 1, 3, 5, 7, 9], inf),
+                  \scale, Pfunc({ j }, inf),
+                  \root, -3,
+                  \dur, Prand([k/2, 0, k/4], inf),
+                  \vol, 0.25
+          ).play;
+
+          ~nid3 = Pbind(
+                  \instrument, \NID3,
+                  \degree, Prand([0, 1, 3, 5, 7, 9], inf),
+                  \scale, Pfunc({ j }, inf),
+                  \root, -15,
+                  \vol, 0.2,
+                  \dur, Prand([0, 0.35, 1.4], inf)
+          ).play;
+
+          ~nid4 = Pbind(
+                  \instrument, \NID4,
+                  \freq, 55,
+                  \dur, 0.7,
+                  \vol, 0.7
+          ).play;
+          // 0.35.wait;
+
+          // ~nid1 = Pbind(
+          // 	\instrument, \NID1,
+          // 	\dur, Pseq([0, k/2], inf)
+          // ).play;
+
+  });
+  )
+  r.play;
+
+  r.reset;
+
+  s.boot;
+
+  s.quit;
+
+
+#+END_SRC
+** 15-4-18
+#+BEGIN_SRC sclang
+s.boot;
+s.quit;
+
+(
+SynthDef(\NID, {arg freq = 1289, vol = 0.6;
+	var snd;
+	var env;
+	var envgen;
+	env = Env.perc(0.01, 1, 1, -4);
+	envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
+	snd = SinOsc.ar(freq, 0, envgen * vol) + LFTri.ar(freq, 0, envgen * vol);
+	Out.ar([1, -1], snd)
+
+}).add;
+)
+
+Synth(\NID)
+
+
+(
+SynthDef(\NID1, {arg freq = 45, vol = 0.6;
+	var snd;
+	var env;
+	var envgen;
+	env = Env.perc(0.01, 3, 1, -4);
+	envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
+	snd = LFTri.ar(freq, 0, envgen * vol);
+	Out.ar([1, -1], snd)
+}).add;
+)
+
+r.reset;
+
+r.play;
+(
+r = Routine({
+
+	j = Scale.mixolydian;
+
+	//- πως αλλαζω κλημακα ανα συνγκεκριμενο χρονικο διαστημα
+	// t = Task({ {
+	// 	5.wait;
+	// 	if( j == Scale.mixolydian,{
+	// 		j = Scale.phrygian;
+	// 	});
+
+	// 	5.wait
+
+	// 	if( j == Scale.phrygian,{
+	// 		j = Scale.mixolydian;
+	// 	});
+
+
+	// }.loop }).start;
+
+	Pbind(\instrument, \NID,
+		\degree, Prand([0, 1, 3, 5, 7, 9], inf),
+		\scale, Pfunc({ j }, inf),
+		\root, 5,
+		\dur, 0.1,
+		\vol, 0.2
+	).play;
+
+	Pbind(\instrument, \NID1,
+		\freq, Pseq([Pseq([44])], inf),
+		\dur, 2,
+		\vol, 0.6
+	).play;
+
+});
+)
+r.play;
+
+r.reset;
+FreqScope.new;
+
+#+END_SRC
+** 16-4-18
+#+BEGIN_SRC sclang
+(
+SynthDef(\NID,{arg freq = 1289, freqK = 10, vol=0.6;
+	var src;
+	var env;
+	var envgen;
+	env = Env.perc(0.001, 2, 0.6, -4);
+	envgen = EnvGen.kr(env, gate:1, doneAction:2);
+	src = BrownNoise.ar([1,1]) * LFTri.ar(freq, 0, envgen * vol);
+	Out.ar([1, -1],src)
+}).add;
+)
+
+(
+SynthDef(\NID1,{arg freq = 1289, freqK = 10, vol=0.6;
+	var src;
+	var env;
+	var envgen;
+	env = Env.perc(0.001, 1, 0.6, -4);
+	envgen = EnvGen.kr(env, gate:1, doneAction:2);
+	src = Blip.ar([WhiteNoise.kr(10)*freqK, WhiteNoise.kr(10)*(SinOsc.ar(50) * freqK)], 200, vol * envgen);
+	Out.ar([1, -1],src)
+}).add;
+)
+
+Synth(\NID1)
+
+
+
+
+
+(
+fork{
+
+	~degreP = Prand((1..13), inf);
+
+	play{LFTri.ar([44, 44], 0, SinOsc.kr(0.01))};
+
+	j = Scale.mixolydian;
+
+	10.wait;
+
+	~nid1 = Pbind(
+		\instrument, \NID1,
+		\freqK, Prand([5, 7, 10, 35, 50, 100, 200], inf),
+		\dur, 0.1,
+		\vol, 0.3
+	).play;
+
+	10.wait;
+
+	Pdef(~nid1, Pbind(\freqK, 50));
+	// 10.wait;
+
+	// ~nid = Pbind(
+	// 	\instrument, \NID,
+	// 	\degree, ~degreP,
+	// 	\scale, Pfunc({ j }, inf),
+	// 	\root, 5,
+	// 	\vol, 0.3,
+	// 	\dur, Prand([0.1, 0.2], inf)
+	// ).play;
+
+	// 3.wait;
+
+	// j = Scale.phrygian;
+
+	// 5.wait;
+
+	// j = Scale.mixolydian;
+
+	// 5.wait;
+
+	// j = Scale.phrygian;
+}
+)
+
+
+
+play{Blip.ar([WhiteNoise.kr(10)*5, WhiteNoise.kr(10)*(SinOsc.ar(50) * 10)])};
+
+
+s.boot;
+s.quit;
+
+Pdef(~nid1, Pbind(\vol, 1));
+
+(
+fork{
+
+~scaleS = Scale.bartok;//experiment with other scales as well. See Scale.directory
+
+
+~pattP = Prand((0..17)++ [\rest] ++ (16..0)++[\rest], inf);
+
+~pattD = Pn(Pgeom(0.25, 1, inf), Pgeom(1, 0.25, inf), inf);
+
+~pattD2 = Pn(Prand([0.025, 0.34, 0.16, 1], inf), Pseq([1, 0.34, 0.56, 0.25], inf), inf);
+
+Pdef(\first_mov1,
+ Pbind(\scale, ~scaleS,
+	\degree, ~pattP,
+	\dur, ~pattD)).play;
+
+	"start with Bartok scale".postln;
+
+	15.wait;
+
+	Pdef(\first_mov1).stop;
+
+	"change to Dorian".postln;
+
+~scaleS = Scale.dorian;
+
+Pdef(\first_mov2,
+ Pbind(\scale, ~scaleS,
+	\degree, ~pattP,
+	\dur, ~pattD2)).play;
+
+	14.wait;
+	"now both".postln;
+
+	Pdef(\first_mov1).play;
+
+	3.wait;
+        "8s to close".postln;
+
+	8.wait;// change this to a bigger number in case you want more
+
+	Pdef(\first_mov1).stop;
+	Pdef(\first_mov2).stop;
+
+	"thats it".postln;
+};
+)
+#+END_SRC
+** 6-5-18
+#+BEGIN_SRC sclang
+(
+// init
+s.boot;
+~sample1 = Buffer.read(s, File.getcwd +/+ "samples/metallosamplemono.wav");
+~sample2 = Buffer.read(s, File.getcwd +/+ "samples/scatemono.wav");
+/// Synth
+SynthDef(\heli2,{|freq = 50, vol = 0.6|
+	var src, env, envgen;
+	env = Env.new([0, 1, 0],[1,1], \sine);
+	envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
+	src  = LFTri.ar([freq, freq],0,vol*(Pulse.ar(15,0.5)*SinOsc.ar(15)));
+	Out.ar(0, (vol)*src*envgen);
+}).add;
+SynthDef(\Grain,{|impFreq = 2, gDur = 0.5, sndbuf, rate = 1, pos = 0.4 , vol = 0.6|
+	var src, env, envgen;
+	env = Env.new([0,1,0],[1,1]);
+	envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
+	src = GrainBuf.ar(2, Impulse.ar(impFreq), gDur, sndbuf, rate, pos);
+	Out.ar(0, (vol * SinOsc.kr(0.25))*src*envgen);
+}).add;
+SynthDef(\Grain2,{|impFreq = 2, gDur = 0.5, sndbuf, rate = 1, pos = 0.4 , vol = 0.6|
+	var src, env, envgen;
+	env = Env.new([0,1,0],[1,1]);
+	envgen = EnvGen.kr(env, gate: 1, doneAction: 2);
+	src = FreeVerb.ar(GrainBuf.ar(2, Impulse.ar(impFreq), gDur, sndbuf, rate, pos), mix: 0.33, room: 1, damp: 0.5, );
+	Out.ar(0, vol*src*envgen);
+}).add;
+SynthDef(\klk, {|impFreq = 2, gDur = 0.5, sndbuf, rate = 1, pos = 0.4 , vol = 0.6|
+	var src, env, envgen;
+	env = Env.perc();
+	envgen = EnvGen.kr(env, gate:1, doneAction: 2);
+	src = GrainBuf.ar(2, Impulse.ar(impFreq), gDur, sndbuf, rate, pos);
+	Out.ar(0, vol*src*envgen);
+}).add;
+SynthDef(\b4f, {|freq = 45, vol = 0.7|
+	var src, envgen;
+	envgen = EnvGen.kr(Env.perc());
+	src = Pan2.ar(SinOsc.ar(freq));
+	Out.ar(0, src*envgen*vol);
+}).add;
+)
+(
+fork{
+	a = Pbind(\instrument, \heli2,
+		\freq, 45,
+		\dur, 2,
+		\vol, 0.5
+	);
+	b = Pbind(\instrument, \Grain,
+		\sndbuf, ~sample1,
+		\pos, 0.02,
+		\gDur, 0.2,
+		\dur, 2,
+		\rate, 0.5,
+		\impFreq, Pseq([45, 45, 45, 45], inf),
+		\vol, 0.5
+	);
+	c = Pbind(\instrument, \Grain2,
+		\sndbuf, ~sample1,
+		\pos, 0.92,
+		\gDur, 0.01,
+		\dur, 0.1,
+		\impFreq, 45,
+		\vol, 2
+	);
+	~klk = Pbind(\instrument, \klk,
+		\sndbuf, ~sample2,
+		\pos, 0.94,
+		\gDur, 0.1,
+		\dur, Prand([0.1, 0.5, 1, 2, 4],  inf),
+		\rate, 1,
+		\impFreq, 20,
+		\vol, 2
+	);
+	~b4f = Pbind(\instrument, \b4f,
+		\freq, 45,
+		\dur, 0.5,
+		\vol, 0.1
+	);
+	Pdef(\klk, ~klk).play;
+	5.do({
+		Pdef(\c, c).play;
+		Pdef(\b, b).play;
+		Pdef(\d).pause;
+		5.wait;
+		Pdef(\c, Pbind(\instrument, \Grain2,
+			\sndbuf, ~sample1,
+			\pos, 0.92,
+			\gDur, 0.01,
+			\dur, 0.1,
+			\impFreq, 60,
+			\vol, 2
+		)).play;
+		5.wait;
+	});
+	Pdef(\a, a).play;
+	Pdef(\b4f, ~b4f).play;
+	Pdef(\klk, Pbind(\instrument, \klk,
+		\sndbuf, ~sample2,
+		\pos, 0.94,
+		\gDur, 0.1,
+		\dur, 0.5,
+		\rate, 1,
+		\impFreq, 20,
+		\vol, Pseq([0, 2, 0 ,2], inf)
+	)).play;
+	Pdef(\d, Pbind(\instrument, \Grain2,
+		\sndbuf, ~sample1,
+		\pos, 0.02,
+		\gDur, 0.01,
+		\dur, 0.1,
+		\impFreq, 45,
+		\vol, 0.01
+	)).play;
+}
+)
+// server memsize code has memory problem
+s.options.memSize = 16400;
+
+s.quit;
+#+END_SRC
 ** 6-5-18_euclidean rhythms
 #+BEGIN_SRC sclang
   (
@@ -473,6 +927,26 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   )
   )
   s.boot
+#+END_SRC
+** 22-5-18
+#+BEGIN_SRC sclang
+(
+SynthDef(\dust,{arg freq = 444, vol = 0.6, freqS = 1, phaseDif = pi/2;
+	var duster;
+	duster = [Dust.ar(freq) * SinOsc.kr(freqS), Dust.ar(freq) * SinOsc.kr(freqS,pi/4) ];
+	Out.ar(0, duster*vol);
+}).add;
+)
+
+e = (type: \noise,
+	instrument: \dust,
+	freq: 9000,
+	freqS: 13,
+	phaseDif: pi/2
+);
+
+
+e.play;
 #+END_SRC
 ** 28-5-18 ( ERGASIA )
 #+BEGIN_SRC sclang
@@ -1317,4 +1791,150 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
       \nid1, Pseq([2000, 2300, 2200], inf),
       \nid3, 300
   )).play;
+#+END_SRC
+** classes
+#+BEGIN_SRC sclang
+SimpleSynth {
+	classvar <>density=200;//a class variable are values that are shared by all objects in the class with the signs <> getter and setter (getting and setting the value of that variable)
+
+	*ar {| doom=1| //class methods are specified with an asterisk (*) before the method name.
+
+		^SinOsc.ar( //To return a different values write the ^ sign before the statement whose value will be returned (Wilson 2011 p.170)
+				LFNoise1.ar(200, doom*density, 400), 0, 0.5)
+
+	}
+
+}
+
+//Put this in your SCClassLibrary or Extensions fodler and recompile class library.
+//Then run the following
+
+//SimpleSynth.density = 400;
+//{SimpleSynth.ar(2)}.play;
+#+END_SRC
+** example
+#+BEGIN_SRC sclang
+/*
+BA 181602
+Composing music with patterns paradigms.
+Objective: a) Experiment with patterns and scales b) Change scale and duration after n time, c) play all scales, d) stop the music
+*/
+
+(
+fork{
+
+~scaleS = Scale.bartok;//experiment with other scales as well. See Scale.directory
+
+
+~pattP = Prand((0..17)++ [\rest] ++ (16..0)++[\rest], inf);
+
+~pattD = Pn(Pgeom(0.25, 1, inf), Pgeom(1, 0.25, inf), inf);
+
+~pattD2 = Pn(Prand([0.025, 0.34, 0.16, 1], inf), Pseq([1, 0.34, 0.56, 0.25], inf), inf);
+
+Pdef(\first_mov1,
+ Pbind(\scale, ~scaleS,
+	\degree, ~pattP,
+	\dur, ~pattD)).play;
+
+	"start with Bartok scale".postln;
+
+	15.wait;
+
+	Pdef(\first_mov1).stop;
+
+	"change to Dorian".postln;
+
+~scaleS = Scale.dorian;
+
+Pdef(\first_mov2,
+ Pbind(\scale, ~scaleS,
+	\degree, ~pattP,
+	\dur, ~pattD2)).play;
+
+	14.wait;
+	"now both".postln;
+
+	Pdef(\first_mov1).play;
+
+	3.wait;
+        "8s to close".postln;
+
+	8.wait;// change this to a bigger number in case you want more
+
+	Pdef(\first_mov1).stop;
+	Pdef(\first_mov2).stop;
+
+	"thats it".postln;
+};
+)
+
+
+
+
+
+
+/*
+BA 180205
+Create data and collect
+Objective: Create data (an array of values i.e integers or floats), and map them to the arguments of the synth
+*/
+
+//Create and collect data as stream (array)
+//iterate over a collection
+(
+a = 10.do{|n|
+    n.postln;
+};
+)
+//collect items between 0-9
+k = a.collect({ |item| item.rand.asStream });
+// play the collection in Event pattern
+Pbind(\dur, 0.09, \degree, Pseq(k)).play;
+
+
+
+//with Array.fill
+
+ s.waitForBoot{
+
+fork{
+//create a synthdef
+b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
+
+1.wait;
+
+SynthDef(\tgrain, {| gate = 1, trate = 1, dur = 1, rate = 1, bufdur = 1, amp = 0.5 |
+
+	var source, env;
+
+	env = EnvGen.kr( Env.asr, gate, doneAction: 2);
+
+source = TGrains.ar(2, Impulse.ar(trate), b, rate, BufDur.kr(b)*bufdur, dur, Dseq([-1, 1], inf), 0.1, 2);
+
+
+	Out.ar(0, source * env * amp);
+}).add;
+
+
+0.5.wait;
+
+// run the synth
+//x = Synth(\tgrain);
+
+0.5.wait;
+
+// create an Array of random values and set them to the synth
+
+	e = Array.fill(100, { rrand(0, 20)});
+	e.postln;
+
+
+
+Pbind(\instrument, \tgrain, \dur, Pseq(e.sqrt), \trate, Pseq(e), \rate, 1, \amp, 1, \bufdur, Pseq(e.reciprocal)).play;
+
+
+};
+}
+
 #+END_SRC

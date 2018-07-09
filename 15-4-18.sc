@@ -32,7 +32,7 @@ SynthDef(\NID1, {arg freq = 45, vol = 0.6;
 r.reset;
 
 r.play;
-
+(
 r = Routine({
 	
 	j = Scale.mixolydian;
@@ -68,7 +68,7 @@ r = Routine({
 	).play;
 
 });
-
+)
 r.play;
 
 r.reset;

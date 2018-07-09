@@ -64,7 +64,7 @@ SynthDef(\NID4,{arg freq = 300, vol=0.6;
 	Out.ar([1, -1],src)
 }).add;
 )
-
+(
 r = Routine({
 	
 	j = Scale.phrygian;
@@ -103,7 +103,7 @@ r = Routine({
 	// ).play;
 
 });
-
+)
 r.play;
 
 r.reset;
