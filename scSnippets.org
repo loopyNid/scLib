@@ -1398,18 +1398,19 @@ e.play;
 **  8-7-18 (midi)
 #+BEGIN_SRC sclang
   // APC40 mkII
+  (
   s.boot;
   MIDIClient.init;
   MIDIIn.connectAll;
   m = MIDIOut(0);
   m.noteOn(0, 32, 9);
   m.noteOff(0, 32, 1);
-  (
   t = 160;
-  TempoClock.default.tempo = t/60;
-  ~b32 = false;
   )
   (
+  TempoClock.default.tempo = t/60;
+  ~b32 = false;
+  ~b24 = false;
   MIDIdef.cc(\nodeOnTest, {
           arg vel, nn, chan, src;
           [vel, nn, chan, src].postln;
@@ -1424,15 +1425,23 @@ e.play;
                           t.postln;
                   });
           });
-          if(nn == 7 && chan == 0,{
-                  Pdef(\thg, Pbind(\instrument, \1,
-                          \freq, 60,
-                          \amp, vel.linexp(1, 127, 0.01, 0.5))
-                  ).play;
+          if(nn == 7,{
+                  if(chan == 0, {
+                          Pdef(\thg, Pbind(\instrument, \1,
+                                  \freq, 65,
+                                  \amp, vel.linexp(1, 127, 0.01, 0.5))
+                          ).play;
+                  });
+                  if(chan == 1,{
+                          Pdef(\thg2, Pbind(\instrument, \2,
+                                  \amp, vel.linexp(1, 127, 0.01, 0.5))
+                          ).play;
+                  });
+
           });
+
   });
-  )
-  (
+
   MIDIdef.noteOn(\noteOn, {
           arg vel, nn, chan, src;
           [vel, nn, chan, src].postln;
@@ -1441,31 +1450,59 @@ e.play;
                           {
                                   Pdef(\thg).stop;
                                   m.noteOff(chan, nn, 29);
-                                          ~b32 = false;},
-                                  {
-                                          Pdef(\thg).play(quant: 1);
-                                          m.noteOn(chan, nn, 29);
-                                          ~b32 = true;
-                                  });
+                                  ~b32 = false;},
+                          {
+                                  Pdef(\thg).play(quant: 1);
+                                  m.noteOn(chan, nn, 29);
+                                  ~b32 = true;
+                          });
 
-          }
+          };
+          if(nn == 33 && chan == 0){
+                  if(~b33 == true,
+                          {
+                                  Pdef(\thg2).stop;
+                                  m.noteOff(chan, nn, 5);
+                                  ~b33 = false;},
+                          {
+                                  Pdef(\thg2).play(quant: 1);
+                                  m.noteOn(chan, nn, 5);
+                                  ~b33 = true;
+                          });
+
+          };
   });
   MIDIdef.noteOff(\noteOff, {
           arg vel, nn, chan, src;
           [vel, nn, chan, src].postln;
   });
-  )
-  (
+
   SynthDef(\1,{| amp = 0.5 , dur = 0.5, freq = 60|
           var src, env;
-          env = EnvGen.kr(Env.perc(), gate:1 , doneAction: 2);
-          src = LFTri.ar(freq) + SinOsc.ar(freq);
-          Out.ar(0, Pan2.ar(FreeVerb.ar(src)  * env) * amp);
+          env = EnvGen.kr(Env.perc(releaseTime: 3), gate:1 , doneAction: 2);
+          src = SinOsc.ar(freq) + LFTri.ar(freq);
+          Out.ar(0, Pan2.ar(FreeVerb.ar(src * env)) * amp);
   }).add;
-  )
-  (
+
+  SynthDef(\2,{| amp = 0.5, freq = 440, dur|
+          var src, env;
+          env = EnvGen.kr(Env.new([0,1,0],[dur/2,dur/2]), gate: 1, doneAction: 2);
+          src = RLPF.ar(Klank.ar(`[[freq, freq*(6/5), freq*(3/2), freq*(4/3)], nil, [1, 1, 1, 1]], PinkNoise.ar(0.01))!2);
+          Out.ar(0, src * amp * env);
+  }).add;
+
+  SynthDef(\3, {| amp = 0.5, freq = 880|
+          var src, env;
+          src =
+
+  }).play;
   Pdef(\thg, Pbind(\instrument, \1,
-          \freq, 60,
+          \freq, 65,
+          \amp, 0.5,
+          \dur, 2
+  ));
+  Pdef(\thg2, Pbind(\instrument, \2,
+          \dur, 5,
           \amp, 0.5
   ));
   )
@@ -1481,6 +1518,7 @@ e.play;
           });
   }
   )
+
 #+END_SRC
 * sc examples
 ** 17-5-18 (Pxrand([Pmono…], inf).play(quant:1); example - tempo - techno)
@@ -1938,3 +1976,16 @@ Pbind(\instrument, \tgrain, \dur, Pseq(e.sqrt), \trate, Pseq(e), \rate, 1, \amp,
 }
 
 #+END_SRC
+* notes
+** pitch ratios
+1/1->unison
+2/1->octave
+3/2->perfect fifth
+4/3->perfect fourth
+5/4->major third
+5/3->magor sixth
+6/5->minor third
+9/8->tone
+15/8->diatonic seventh
+16/15->semitone
+81/64->major third pythagorean
