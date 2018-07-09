@@ -805,18 +805,19 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   }
   )
 #+END_SRC
-** COMMENT 29-6-18
+** 29-6-18
 #+BEGIN_SRC sclang
-  // to do change frequency in array
-  s.boot
-  TempoClock.default.tempo = 100/60;
+  s.boot;
   // eca
   (
-  ~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
+  ~gener = 0;
+  TempoClock.default.tempo = 100/60;
+  n~ecaa = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
   ~buffer = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
   ~ecafreq = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0];
   ~patt = [[[1,1,1], 0], [[1,1,0], 1], [[1,0,1], 1], [[1,0,0], 0], [[0,1,1], 1], [[0,1,0], 1], [[0,0,1], 1], [[0,0,0], 0]];// rule 110
   ~ecae =  {(
+          ~gener = ~gener + 1;
           for(0, ~ecaa.size - 1,{|i|
                   if(i == 0,{
                           ~pre = ~ecaa[~ecaa.size - 1];
@@ -842,8 +843,9 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
                   ~ecafreq[i] = ~ecaa[i] * (i + 1);
           });
           ~ecaa = ~buffer;
-          ~ecafreq;
-          ~ecaa;
+          ~ecafreq.postln;
+          ~ecaa.postln;
+          ~gener.postln;
   )};
   )
   ~ecae.value
@@ -884,7 +886,7 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
           env = EnvGen.kr(Env.perc(0.01, 1), gate: 1, doneAction: 2);
           src = Blip.ar(1, mul: 2) + FreeVerb.ar(RHPF.ar(WhiteNoise.ar(0.01), 3200));
           Out.ar(0, Pan2.ar(src * env * amp));
-  }).play;
+  }).add;
   )
   (
   Pdef(\thg3,
@@ -906,7 +908,6 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
   fork{
           inf.do({
                   10.wait;
-                  ("routine").postln;
                   ~ecae.value();
                   ~ecaa.postln;
                   ~ecafreq.postln;
@@ -916,6 +917,93 @@ https://code.orgmode.org/bzg/org-mode/src/master/contrib/lisp/ob-sclang.el
                           \degree, ~ecafreq,
                           \scale, Pfunc({j},inf),
                   )).play(quant: 1);
+          });
+  }
+  )
+#+END_SRC
+**  8-7-18 (midi)
+#+BEGIN_SRC sclang
+  // APC40 mkII
+  s.boot;
+  MIDIClient.init;
+  MIDIIn.connectAll;
+  m = MIDIOut(0);
+  m.noteOn(0, 32, 9);
+  m.noteOff(0, 32, 1);
+  (
+  t = 160;
+  TempoClock.default.tempo = t/60;
+  ~b32 = false;
+  )
+  (
+  MIDIdef.cc(\nodeOnTest, {
+          arg vel, nn, chan, src;
+          [vel, nn, chan, src].postln;
+          if(nn == 13,{
+                  if(vel == 1,{
+                          t = t + 5;
+                          TempoClock.default.tempo = t/60;
+                          t.postln;
+                  },{
+                          t = t - 5;
+                          TempoClock.default.tempo = t/60;
+                          t.postln;
+                  });
+          });
+          if(nn == 7 && chan == 0,{
+                  Pdef(\thg, Pbind(\instrument, \1,
+                          \freq, 60,
+                          \amp, vel.linexp(1, 127, 0.01, 0.5))
+                  ).play;
+          });
+  });
+  )
+  (
+  MIDIdef.noteOn(\noteOn, {
+          arg vel, nn, chan, src;
+          [vel, nn, chan, src].postln;
+          if(nn == 32 && chan == 0){
+                  if(~b32 == true,
+                          {
+                                  Pdef(\thg).stop;
+                                  m.noteOff(chan, nn, 29);
+                                          ~b32 = false;},
+                                  {
+                                          Pdef(\thg).play(quant: 1);
+                                          m.noteOn(chan, nn, 29);
+                                          ~b32 = true;
+                                  });
+
+          }
+  });
+  MIDIdef.noteOff(\noteOff, {
+          arg vel, nn, chan, src;
+          [vel, nn, chan, src].postln;
+  });
+  )
+  (
+  SynthDef(\1,{| amp = 0.5 , dur = 0.5, freq = 60|
+          var src, env;
+          env = EnvGen.kr(Env.perc(), gate:1 , doneAction: 2);
+          src = LFTri.ar(freq) + SinOsc.ar(freq);
+          Out.ar(0, Pan2.ar(FreeVerb.ar(src)  * env) * amp);
+  }).add;
+  )
+  (
+  Pdef(\thg, Pbind(\instrument, \1,
+          \freq, 60,
+          \amp, 0.5
+  ));
+  )
+  // color cycle led
+  (
+  fork{
+          f = 0;
+          128.do({
+                  2.wait;
+                  m.noteOn(0, 32, f);
+                  f = f + 1;
+                  f.postln;
           });
   }
   )
